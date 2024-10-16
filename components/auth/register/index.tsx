@@ -4,6 +4,12 @@ import { useSignUp } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+// Define a custom error type
+type CustomError = {
+    errors?: { message: string }[];
+    message?: string;
+};
+
 const RegisterPage = () => {
     const { isLoaded, signUp, setActive } = useSignUp();
     const [email, setEmail] = useState('');
@@ -36,9 +42,10 @@ const RegisterPage = () => {
 
             // change the UI to our pending section.
             setPendingVerification(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.errors?.[0]?.message || 'An error occurred during registration.');
+            const customError = err as CustomError;
+            setError(customError.errors?.[0]?.message || customError.message || 'An error occurred during registration.');
         }
     };
 
@@ -60,9 +67,10 @@ const RegisterPage = () => {
                 await setActive({ session: completeSignUp.createdSessionId });
                 router.push('/');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(JSON.stringify(err, null, 2));
-            setError(err.errors?.[0]?.message || 'An error occurred during email verification.');
+            const customError = err as CustomError;
+            setError(customError.errors?.[0]?.message || customError.message || 'An error occurred during email verification.');
         }
     };
 
@@ -78,9 +86,10 @@ const RegisterPage = () => {
                 redirectUrl: "/sso-callback",
                 redirectUrlComplete: "/"
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error during Google sign up:', err);
-            setError(err.errors?.[0]?.message || 'An error occurred during Google sign up.');
+            const customError = err as CustomError;
+            setError(customError.errors?.[0]?.message || customError.message || 'An error occurred during Google sign up.');
         }
     };
 

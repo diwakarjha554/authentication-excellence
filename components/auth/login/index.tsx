@@ -30,9 +30,9 @@ const LoginPage = () => {
                 console.error('Login failed', result);
                 setError('Login failed. Please check your credentials and try again.');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error during login:', err);
-            setError(err.errors?.[0]?.message || 'An error occurred during login.');
+            setError(err instanceof Error ? err.message : 'An error occurred during login.');
         }
     };
 
@@ -47,9 +47,9 @@ const LoginPage = () => {
                 redirectUrl: "/sso-callback",
                 redirectUrlComplete: "/"
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error during Google login:', err);
-            setError(err.errors?.[0]?.message || 'An error occurred during Google login.');
+            setError(err instanceof Error ? err.message : 'An error occurred during Google login.');
         }
     };
 
@@ -109,7 +109,7 @@ const LoginPage = () => {
                     </button>
                 </div>
                 <div className='mt-4'>
-                    Don't have account? <Link className='text-blue-500' href="/auth/register">Register</Link>
+                    Don&apos;t have account? <Link className='text-blue-500' href="/auth/register">Register</Link>
                 </div>
             </div>
         </div>
