@@ -6,7 +6,7 @@ import Link from 'next/link';
 const Navbar = () => {
     
     return (
-        <div className='bg-black text-white w-full h-16 flex justify-center items-center fixed top-0 z-50'>
+        <div className='bg-black text-white w-full h-16 flex justify-center items-center'>
             <div className='w-full max-w-[1500px] flex justify-between items-center'>
                 <Link href='/' className='text-2xl font-bold'>
                     Authentication
