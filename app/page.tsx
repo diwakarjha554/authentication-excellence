@@ -1,11 +1,10 @@
-import Navbar from '@/components/navbar';
 import React from 'react';
 
 const page = () => {
     return (
-        <>
-            <Navbar />
-        </>
+        <div className='h-screen w-full flex justify-center items-center'>
+            Dashboard
+        </div>
     );
 };
 
