@@ -1,5 +1,5 @@
 import React from 'react';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { SignedIn, UserButton } from '@clerk/nextjs';
 import { SignOutButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
