@@ -18,7 +18,7 @@ const RegisterPage = () => {
                     </Link>{' '}
                     and{' '}
                     <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
-                        Privacy Policy
+                        Privacy Policys
                     </Link>
                     .
                 </p>
