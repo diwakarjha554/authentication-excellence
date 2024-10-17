@@ -23,9 +23,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
     });
     const [updating, setUpdating] = useState(false);
 
-    useEffect(() => {
-        fetchTodo();
-    });
+    
 
     const fetchTodo = async () => {
         try {
@@ -55,6 +53,10 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchTodo();
+    }, [params.id]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
