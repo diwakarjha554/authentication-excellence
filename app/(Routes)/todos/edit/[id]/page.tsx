@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Todo {
     _id: string;
@@ -23,8 +24,6 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
         completed: false,
     });
     const [updating, setUpdating] = useState(false);
-
-    
 
     const fetchTodo = async () => {
         try {
@@ -137,10 +136,10 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-lg mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold">Edit Todo</h1>
-                    <Link href="/" className="text-blue-500 hover:text-blue-600">
+                    <h1 className="text-3xl font-bold">Edit Todo</h1>
+                    <Button variant="secondary" onClick={() => router.push('/')}>
                         Back to Todos
-                    </Link>
+                    </Button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -185,22 +184,25 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="completed"
-                            checked={formData.completed}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    completed: e.target.checked,
-                                }))
-                            }
-                            className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                            disabled={updating}
-                        />
-                        <label htmlFor="completed" className="ml-2 block text-sm text-gray-700">
-                            Mark as completed
-                        </label>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="completed"
+                                checked={formData.completed}
+                                onCheckedChange={(checked) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        completed: checked === true,
+                                    }))
+                                }
+                                disabled={updating}
+                            />
+                            <label
+                                htmlFor="completed"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                Mark as completed
+                            </label>
+                        </div>
                     </div>
 
                     {error && (
@@ -210,17 +212,10 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                     )}
 
                     <div className="flex justify-end space-x-3">
-                        <Button
-                            variant="outline"
-                            onClick={() => router.push('/')}
-                        >
+                        <Button variant="outline" onClick={() => router.push('/')}>
                             Cancel
                         </Button>
-                        <Button
-                            variant="default"
-                            type="submit"
-                            disabled={updating}
-                        >
+                        <Button variant="default" type="submit" disabled={updating}>
                             {updating ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </div>
