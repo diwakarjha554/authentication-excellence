@@ -3,16 +3,16 @@ import mongoose from "mongoose";
 const UserSchema = new mongoose.Schema({
     clerkId: {
         type: String,
-        required: true,
+        required: [true, 'Clerk ID is required'],
         unique: true,
     },
     email: {
         type: String,
-        required: true,
+        required: [true, 'Email is required'],
     },
     photo: {
         type: String,
-        required: true,
+        required: [true, 'Photo URL is required'],
     },
     firstName: {
         type: String,
@@ -20,6 +20,8 @@ const UserSchema = new mongoose.Schema({
     lastName: {
         type: String,
     },
+}, {
+    timestamps: true
 });
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
