@@ -1,146 +1,140 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
-interface TodoFormProps {
-    onSuccess?: () => void;
-    initialData?: {
-        _id?: string;
-        title: string;
-        description: string;
-        completed: boolean;
-    };
+interface TodoFormData {
+    title: string;
+    description: string;
 }
 
-export default function TodoForm({ onSuccess, initialData }: TodoFormProps) {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    
-    const [formData, setFormData] = useState({
-        title: initialData?.title || '',
-        description: initialData?.description || '',
-        completed: initialData?.completed || false,
+const CreateTodo = () => {
+    const [formData, setFormData] = useState<TodoFormData>({
+        title: '',
+        description: '',
     });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        setError(null);
+        setSuccess(false);
+    };
+
+    const validateForm = (): boolean => {
+        if (!formData.title.trim()) {
+            setError('Title is required');
+            return false;
+        }
+        if (formData.title.length < 3) {
+            setError('Title must be at least 3 characters long');
+            return false;
+        }
+        return true;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateForm()) return;
+
         setIsLoading(true);
-        setError('');
+        setError(null);
 
         try {
-            const url = initialData?._id 
-                ? `/api/todos/${initialData._id}`
-                : '/api/todos';
-                
-            const method = initialData?._id ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method,
+            const response = await fetch('/api/todo', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    userId: 'your-user-id-here', // Replace with actual user ID
-                }),
+                body: JSON.stringify(formData),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to save todo');
+                throw new Error('Failed to create todo');
             }
 
-            setFormData({
-                title: '',
-                description: '',
-                completed: false,
-            });
-            
-            router.refresh();
-            onSuccess?.();
-            
-        } catch (err: any) {
-            setError(err.message);
+            const data = await response.json();
+            setSuccess(true);
+            setFormData({ title: '', description: '' });
+            console.log(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Something went wrong');
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-                <label 
-                    htmlFor="title" 
-                    className="block text-sm font-medium text-gray-700"
-                >
-                    Title
-                </label>
-                <input
-                    type="text"
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        title: e.target.value
-                    }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                />
+        <div className="w-full max-w-md mx-auto p-6 space-y-6">
+            <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-gray-900">Create New Todo</h2>
+                <p className="text-sm text-gray-500">Add a new task to your todo list</p>
             </div>
 
-            <div>
-                <label 
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                >
-                    Description
-                </label>
-                <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        description: e.target.value
-                    }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    rows={3}
-                    required
-                />
-            </div>
-
-            <div className="flex items-center">
-                <input
-                    type="checkbox"
-                    id="completed"
-                    checked={formData.completed}
-                    onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        completed: e.target.checked
-                    }))}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <label 
-                    htmlFor="completed"
-                    className="ml-2 block text-sm text-gray-700"
-                >
-                    Completed
-                </label>
-            </div>
-
-            {error && (
-                <div className="text-red-500 text-sm">
-                    {error}
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                        id="title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        placeholder="Enter todo title"
+                        disabled={isLoading}
+                    />
                 </div>
-            )}
 
-            <button
-                type="submit"
-                disabled={isLoading}
-                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-                {isLoading ? 'Saving...' : (initialData?._id ? 'Update' : 'Create')}
-            </button>
-        </form>
+                <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        placeholder="Enter todo description (optional)"
+                        disabled={isLoading}
+                        className="min-h-[100px]"
+                    />
+                </div>
+
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
+                {success && (
+                    <Alert className="bg-green-50 text-green-700 border-green-200">
+                        <AlertDescription>Todo created successfully!</AlertDescription>
+                    </Alert>
+                )}
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating...
+                        </>
+                    ) : (
+                        'Create Todo'
+                    )}
+                </Button>
+            </form>
+        </div>
     );
-}
+};
+
+export default CreateTodo;

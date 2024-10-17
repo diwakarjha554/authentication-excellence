@@ -1,26 +1,32 @@
 import mongoose from "mongoose";
-import User from "./user.model";
 
 const TodoSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: User,
-        required: true,
+        ref: 'User',
+        required: [true, 'User ID is required'],
     },
     title: {
         type: String,
-        required: true,
+        required: [true, 'Title is required'],
+        trim: true,
+        minlength: [2, 'Title must be at least 2 characters long'],
+        maxlength: [100, 'Title cannot exceed 100 characters'],
     },
     description: {
         type: String,
-        required: true,
+        required: [true, 'Description is required'],
+        trim: true,
+        minlength: [2, 'Description must be at least 2 characters long'],
+        maxlength: [500, 'Description cannot exceed 500 characters'],
     },
     completed: {
         type: Boolean,
         default: false,
     },
+}, {
+    timestamps: true
 });
 
 const Todo = mongoose.models.Todo || mongoose.model("Todo", TodoSchema);
-
 export default Todo;

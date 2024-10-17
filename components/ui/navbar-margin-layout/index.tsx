@@ -48,7 +48,7 @@ const NavbarMarginLayout: React.FC<NavbarMarginLayoutProps> = ({ children }) => 
         <div className="relative">
             <Navbar />
             <div 
-                className="transition-[padding] duration-200"
+                className="transition-[padding] duration-200 max-w-screen w-full"
                 style={{ 
                     paddingTop: navbarHeight ? `${navbarHeight}px` : 'var(--navbar-height-fallback, 110px)'
                 }}
