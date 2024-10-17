@@ -56,7 +56,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         fetchTodo();
-    }, [params.id, fetchTodo]);
+    }, [params.id]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
