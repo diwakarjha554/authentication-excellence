@@ -9,15 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+type CustomError = {
+    errors?: { message: string }[];
+    message?: string;
+};
+
 const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
     const [isLoading, setIsLoading] = useState(false);
     const { isLoaded, signIn, setActive } = useSignIn();
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [pendingVerification, setPendingVerification] = useState(false);
+    const [code, setCode] = useState('');
     const [error, setError] = useState('');
     const router = useRouter();
 
-    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setIsLoading(true);
         setError('');
@@ -28,27 +34,47 @@ const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
         }
 
         try {
-            const result = await signIn.create({
+            await signIn.create({
                 identifier: email,
-                password,
+                strategy: 'email_code',
             });
 
-            if (result.status === 'complete') {
-                await setActive({ session: result.createdSessionId });
-                router.push('/'); // Redirect to home page or dashboard
-            } else {
-                console.error('Login failed', result);
-                setError('Login failed. Please check your credentials and try again.');
-            }
-        } catch (err) {
-            console.error('Error during login:', err);
-            setError(err instanceof Error ? err.message : 'An error occurred during login.');
+            setPendingVerification(true);
+        } catch (err: unknown) {
+            const customError = err as CustomError;
+            setError(
+                customError.errors?.[0]?.message || customError.message || 'An error occurred during sign-in.'
+            );
         } finally {
             setIsLoading(false);
         }
     }
 
-    const handleGoogleLogin = async () => {
+    const onPressVerify = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        if (!isLoaded) return;
+
+        try {
+            const completeSignIn = await signIn.attemptFirstFactor({
+                strategy: 'email_code',
+                code,
+            });
+
+            if (completeSignIn.status === 'complete') {
+                await setActive({ session: completeSignIn.createdSessionId });
+                router.push('/');
+            }
+        } catch (err: unknown) {
+            const customError = err as CustomError;
+            setError(
+                customError.errors?.[0]?.message ||
+                    customError.message ||
+                    'An error occurred during email verification.'
+            );
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
         if (!isLoaded) return;
 
         try {
@@ -57,9 +83,11 @@ const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                 redirectUrl: '/sso-callback',
                 redirectUrlComplete: '/',
             });
-        } catch (err) {
-            console.error('Error during Google login:', err);
-            setError(err instanceof Error ? err.message : 'An error occurred during Google login.');
+        } catch (err: unknown) {
+            const customError = err as CustomError;
+            setError(
+                customError.errors?.[0]?.message || customError.message || 'An error occurred during Google sign in.'
+            );
         }
     };
 
@@ -70,42 +98,42 @@ const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
-            <form onSubmit={onSubmit}>
-                <div className="grid gap-2">
-                    <div className="grid gap-1">
-                        <Input
-                            id="email"
-                            type="email"
-                            autoCapitalize="none"
-                            autoComplete="email"
-                            autoCorrect="off"
-                            disabled={isLoading}
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder='Email Id'
-                            required
-                        />
+            {!pendingVerification ? (
+                <form onSubmit={onSubmit}>
+                    <div className="grid gap-2">
+                        <div className="grid gap-1">
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email Id"
+                                disabled={isLoading}
+                                required
+                            />
+                        </div>
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+                            Sign In
+                        </Button>
                     </div>
-                    <div className="grid gap-1">
+                </form>
+            ) : (
+                <form onSubmit={(e) => e.preventDefault()}>
+                    <div className="grid gap-2">
                         <Input
-                            id="password"
-                            type="password"
-                            autoCapitalize="none"
-                            autoComplete="current-password"
-                            autoCorrect="off"
-                            disabled={isLoading}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder='Password'
-                            required
+                            id="code"
+                            name="code"
+                            placeholder="Enter verification code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
                         />
+                        <Button type="button" onClick={onPressVerify}>
+                            Verify Email
+                        </Button>
                     </div>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-                        Sign In
-                    </Button>
-                </div>
-            </form>
+                </form>
+            )}
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
@@ -114,13 +142,13 @@ const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                     <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                 </div>
             </div>
-            <Button variant="outline" type="button" disabled={isLoading} onClick={handleGoogleLogin}>
+            <Button variant="outline" type="button" onClick={handleGoogleSignIn} disabled={isLoading}>
                 {isLoading ? (
                     <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                     <Icons.google className="mr-2 h-4 w-4" />
                 )}
-                Google
+                Sign in with Google
             </Button>
         </div>
     );

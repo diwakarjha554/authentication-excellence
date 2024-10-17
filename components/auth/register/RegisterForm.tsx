@@ -18,9 +18,9 @@ const RegisterForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
     const [isLoading, setIsLoading] = useState(false);
     const { isLoaded, signUp, setActive } = useSignUp();
     const [email, setEmail] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [password, setPassword] = useState('');
+    // const [firstName, setFirstName] = useState('');
+    // const [lastName, setLastName] = useState('');
+    // const [password, setPassword] = useState('');
     const [pendingVerification, setPendingVerification] = useState(false);
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
@@ -38,10 +38,10 @@ const RegisterForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
 
         try {
             await signUp.create({
-                firstName,
-                lastName,
+                // firstName,
+                // lastName,
                 emailAddress: email,
-                password,
+                // password,
             });
 
             await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
@@ -108,7 +108,7 @@ const RegisterForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
             {!pendingVerification ? (
                 <form onSubmit={onSubmit}>
                     <div className="grid gap-2">
-                        <div className="grid gap-1">
+                        {/* <div className="grid gap-1">
                             <Input
                                 id="first_name"
                                 name="first_name"
@@ -127,7 +127,7 @@ const RegisterForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                                 disabled={isLoading}
                                 required
                             />
-                        </div>
+                        </div> */}
                         <div className="grid gap-1">
                             <Input
                                 id="email"
@@ -139,7 +139,7 @@ const RegisterForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                                 required
                             />
                         </div>
-                        <div className="grid gap-1">
+                        {/* <div className="grid gap-1">
                             <Input
                                 id="password"
                                 name="password"
@@ -149,7 +149,7 @@ const RegisterForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                                 disabled={isLoading}
                                 required
                             />
-                        </div>
+                        </div> */}
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
                             Register
