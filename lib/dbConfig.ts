@@ -15,7 +15,7 @@ interface CustomGlobal {
 // Declare the global object with the custom type
 declare const global: CustomGlobal;
 
-let cached: MongooseConnection = global.mongoose || { conn: null, promise: null };
+const cached: MongooseConnection = global.mongoose || { conn: null, promise: null };
 
 if (!global.mongoose) {
     global.mongoose = cached;
