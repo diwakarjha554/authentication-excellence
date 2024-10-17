@@ -19,23 +19,24 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        completed: false
+        completed: false,
     });
     const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
         fetchTodo();
-    }, [params.id]);
+    }, []);
 
     const fetchTodo = async () => {
         try {
             setLoading(true);
             setError(null);
 
+            // Changed to GET request for fetching the todo
             const response = await fetch(`/api/todo/${params.id}`, {
-                method: 'PATCH',
+                method: 'GET',
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch todo');
             }
@@ -45,7 +46,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
             setFormData({
                 title: data.title,
                 description: data.description,
-                completed: data.completed
+                completed: data.completed,
             });
         } catch (error) {
             console.error('Error fetching todo:', error);
@@ -73,7 +74,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                 throw new Error('Failed to update todo');
             }
 
-            router.push('/todos');
+            router.push('/');
             router.refresh();
         } catch (error) {
             console.error('Error updating todo:', error);
@@ -102,10 +103,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                         <p className="text-red-600 text-center">{error}</p>
                         <div className="mt-4 flex justify-center">
-                            <Link 
-                                href="/"
-                                className="text-blue-500 hover:text-blue-600"
-                            >
+                            <Link href="/" className="text-blue-500 hover:text-blue-600">
                                 Return to Todos
                             </Link>
                         </div>
@@ -122,10 +120,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                     <div className="text-center">
                         <p className="text-gray-600">Todo not found</p>
                         <div className="mt-4">
-                            <Link 
-                                href="/todos"
-                                className="text-blue-500 hover:text-blue-600"
-                            >
+                            <Link href="/" className="text-blue-500 hover:text-blue-600">
                                 Return to Todos
                             </Link>
                         </div>
@@ -140,30 +135,26 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
             <div className="max-w-lg mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Edit Todo</h1>
-                    <Link
-                        href="/"
-                        className="text-blue-500 hover:text-blue-600"
-                    >
+                    <Link href="/" className="text-blue-500 hover:text-blue-600">
                         Back to Todos
                     </Link>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label 
-                            htmlFor="title" 
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                        >
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                             Title
                         </label>
                         <input
                             type="text"
                             id="title"
                             value={formData.title}
-                            onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                title: e.target.value 
-                            }))}
+                            onChange={(e) =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    title: e.target.value,
+                                }))
+                            }
                             className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required
                             disabled={updating}
@@ -171,19 +162,18 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div>
-                        <label 
-                            htmlFor="description" 
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                        >
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                             Description
                         </label>
                         <textarea
                             id="description"
                             value={formData.description}
-                            onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                description: e.target.value 
-                            }))}
+                            onChange={(e) =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    description: e.target.value,
+                                }))
+                            }
                             className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             rows={4}
                             required
@@ -196,17 +186,16 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                             type="checkbox"
                             id="completed"
                             checked={formData.completed}
-                            onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                completed: e.target.checked 
-                            }))}
+                            onChange={(e) =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    completed: e.target.checked,
+                                }))
+                            }
                             className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
                             disabled={updating}
                         />
-                        <label 
-                            htmlFor="completed" 
-                            className="ml-2 block text-sm text-gray-700"
-                        >
+                        <label htmlFor="completed" className="ml-2 block text-sm text-gray-700">
                             Mark as completed
                         </label>
                     </div>
@@ -218,10 +207,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                     )}
 
                     <div className="flex justify-end space-x-3">
-                        <Link
-                            href="/todos"
-                            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                        >
+                        <Link href="/" className="px-4 py-2 text-gray-600 hover:text-gray-800">
                             Cancel
                         </Link>
                         <button
