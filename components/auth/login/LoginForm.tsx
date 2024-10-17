@@ -7,10 +7,9 @@ import { cn } from '@/lib/utils';
 import { Icons } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-export function UserAuthForm({ className }: React.HTMLAttributes<HTMLDivElement>) {
+const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
     const [isLoading, setIsLoading] = useState(false);
     const { isLoaded, signIn, setActive } = useSignIn();
     const [email, setEmail] = useState('');
@@ -74,7 +73,6 @@ export function UserAuthForm({ className }: React.HTMLAttributes<HTMLDivElement>
             <form onSubmit={onSubmit}>
                 <div className="grid gap-2">
                     <div className="grid gap-1">
-                        <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
                             type="email"
@@ -84,11 +82,11 @@ export function UserAuthForm({ className }: React.HTMLAttributes<HTMLDivElement>
                             disabled={isLoading}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            placeholder='Email Id'
                             required
                         />
                     </div>
                     <div className="grid gap-1">
-                        <Label htmlFor="password">Password</Label>
                         <Input
                             id="password"
                             type="password"
@@ -98,6 +96,7 @@ export function UserAuthForm({ className }: React.HTMLAttributes<HTMLDivElement>
                             disabled={isLoading}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            placeholder='Password'
                             required
                         />
                     </div>
@@ -125,4 +124,6 @@ export function UserAuthForm({ className }: React.HTMLAttributes<HTMLDivElement>
             </Button>
         </div>
     );
-}
+};
+
+export default LoginForm;

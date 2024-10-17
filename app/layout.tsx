@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
+import { ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import '@/stylesheets/globals.css';
-import { ClerkProvider } from '@clerk/nextjs';
-import Navbar from '@/components/navbar';
 
 export const metadata: Metadata = {
     title: {
-        default: 'Authentication',
+        default: 'Taskivio',
         template: '%s',
     },
-    description: 'This is the authentication webapp',
+    description:
+        'Taskivio is an intuitive SaaS platform that simplifies task management for individuals and teams. With customizable workflows, smart reminders, and seamless app integrations, it keeps you organized and on track. Elevate your productivity and focus as you turn every task into a stepping stone toward success!',
     icons: {
         icon: '/icon.png',
     },
@@ -20,10 +20,14 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" className={`antialiased`}>
             <body>
                 <ClerkProvider>
-                    <Navbar />
+                    <ClerkLoading>
+                        <div className="flex h-screen items-center justify-center text-2xl">
+                            <p>Loading...</p>
+                        </div>
+                    </ClerkLoading>
                     {children}
                 </ClerkProvider>
             </body>

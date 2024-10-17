@@ -1,24 +1,17 @@
 import React from 'react';
-import { SignedIn, UserButton } from '@clerk/nextjs';
 import { SignOutButton } from '@clerk/nextjs';
-import Link from 'next/link';
+import Logo from '../ui/features/Logo';
 
 const Navbar = () => {
-    
     return (
-        <div className='bg-black text-white w-full h-16 flex justify-center items-center'>
-            <div className='w-full max-w-[1500px] flex justify-between items-center'>
-                <Link href='/' className='text-2xl font-bold'>
-                    Authentication
-                </Link>
-                <SignedIn>
-                    <div className='flex items-center gap-4'>
-                        <UserButton />
-                        <div className='cursor-pointer bg-blue-500 p-2 rounded font-semibold'>
-                            <SignOutButton />
-                        </div>
+        <div className="w-full bg-zinc-900 text-white fixed top-0 left-0 right-0 z-50">
+            <div className="max-w-[1500px] mx-auto flex items-center justify-between py-5 px-5">
+                <Logo />
+                <div>
+                    <div className="cursor-pointer bg-blue-500 p-2 rounded">
+                        <SignOutButton />
                     </div>
-                </SignedIn>
+                </div>
             </div>
         </div>
     );
