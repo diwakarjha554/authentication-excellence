@@ -25,7 +25,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
 
     useEffect(() => {
         fetchTodo();
-    }, []);
+    });
 
     const fetchTodo = async () => {
         try {
