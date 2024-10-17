@@ -1,4 +1,7 @@
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface TodoItemProps {
     todo: {
@@ -12,18 +15,13 @@ interface TodoItemProps {
 }
 
 export default function TodoItem({ todo, onDelete, onToggleComplete }: TodoItemProps) {
+    const router = useRouter();
     return (
         <div className="border rounded-lg p-4 shadow-sm w-full">
             <div className="flex items-center justify-between w-full">
                 <div className="flex items-center space-x-4 w-full">
-                    <input
-                        type="checkbox"
-                        checked={todo.completed}
-                        onChange={() => onToggleComplete(todo._id, todo.completed)}
-                        className="h-4 w-4"
-                    />
                     <div>
-                        <h3 className={`font-medium ${todo.completed ? 'line-through text-gray-500' : ''}`}>
+                        <h3 className={`font-medium text-lg ${todo.completed ? 'line-through text-gray-500' : ''}`}>
                             {todo.title}
                         </h3>
                         <p className={`text-sm ${todo.completed ? 'line-through text-gray-500' : 'text-gray-600'}`}>
@@ -31,19 +29,31 @@ export default function TodoItem({ todo, onDelete, onToggleComplete }: TodoItemP
                         </p>
                     </div>
                 </div>
-                <div className="flex space-x-2">
-                    <Link
-                        href={`/todos/edit/${todo._id}`}
-                        className="text-blue-500 hover:text-blue-600"
+                <div className="flex space-x-4 items-center">
+                    <Checkbox
+                        id={`todo-${todo._id}`}
+                        checked={todo.completed}
+                        onCheckedChange={() => onToggleComplete(todo._id, todo.completed)}
+                        aria-label={`Mark "${todo.title}" as ${todo.completed ? 'incomplete' : 'complete'}`}
+                    />
+                    <label
+                        htmlFor={`todo-${todo._id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                        {todo.completed ? 'Completed' : 'Mark as complete'}
+                    </label>
+                    <Button
+                        variant="secondary"
+                        onClick={() => router.push(`/todos/edit/${todo._id}`)}
                     >
                         Edit
-                    </Link>
-                    <button
+                    </Button>
+                    <Button
+                        variant="destructive"
                         onClick={() => onDelete(todo._id)}
-                        className="text-red-500 hover:text-red-600"
                     >
                         Delete
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
