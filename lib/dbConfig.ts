@@ -7,22 +7,41 @@ interface MongooseConnection {
     promise: Promise<Mongoose> | null;
 }
 
-let cached: MongooseConnection = (global as any).mongoose;
+// Define a type for the global object with the mongoose property
+interface CustomGlobal {
+    mongoose?: MongooseConnection;
+}
 
-if (!cached) {
-    cached = (global as any).mongoose = { conn: null, promise: null };
+// Declare the global object with the custom type
+declare const global: CustomGlobal;
+
+let cached: MongooseConnection = global.mongoose || { conn: null, promise: null };
+
+if (!global.mongoose) {
+    global.mongoose = cached;
 }
 
 export const dbConnect = async () => {
     if (cached.conn) {
         return cached.conn;
-    };
-    cached.promise = cached.promise || mongoose.connect(MONGODB_URL, {
-        dbName: "clerkTaskivio",
-        bufferCommands: false,
-        connectTimeoutMS: 30000,
-    });
+    }
 
-    cached.conn = await cached.promise;
+    if (!cached.promise) {
+        const opts = {
+            dbName: 'clerkTaskivio',
+            bufferCommands: false,
+            connectTimeoutMS: 30000,
+        };
+
+        cached.promise = mongoose.connect(MONGODB_URL, opts);
+    }
+
+    try {
+        cached.conn = await cached.promise;
+    } catch (e) {
+        cached.promise = null;
+        throw e;
+    }
+
     return cached.conn;
-}
+};
