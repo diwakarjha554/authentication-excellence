@@ -131,7 +131,8 @@ const CreateTodo = () => {
                 ...prev,
                 description: generatedDescription,
             }));
-        } catch (err) {
+        } catch (error) {
+            console.error('Error generating description:', error);
             setError('Failed to generate description. Please try again.');
         } finally {
             setIsGeneratingDescription(false);

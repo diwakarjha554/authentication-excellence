@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+// import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -144,8 +144,9 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                 ...prev,
                 description: generatedDescription,
             }));
-        } catch (err) {
+        } catch (error) {
             setError('Failed to generate description. Please try again.');
+            console.error('Error generating description:', error);
         } finally {
             setIsGeneratingDescription(false);
         }
