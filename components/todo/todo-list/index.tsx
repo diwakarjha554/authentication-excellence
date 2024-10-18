@@ -53,7 +53,7 @@ interface TodoProps {
 }
 
 const ActionCell = ({ todo }: { todo: TodoProps }) => {
-    const router = useRouter(); 
+    const router = useRouter();
 
     const handleDelete = async (id: string) => {
         try {
@@ -84,9 +84,7 @@ const ActionCell = ({ todo }: { todo: TodoProps }) => {
                     Copy todo ID
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push(`/todos/edit/${todo._id}`)}>
-                    Edit todo
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/todos/edit/${todo._id}`)}>Edit todo</DropdownMenuItem>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Delete todo</DropdownMenuItem>
@@ -152,7 +150,7 @@ export const columns: ColumnDef<TodoProps>[] = [
         cell: ({ row }) => {
             const description = row.getValue('description') as string;
             const words = description.split(' ');
-            const truncatedDescription = words.slice(0, 7).join(' ') + (words.length > 7 ? '...' : '');
+            const truncatedDescription = words.slice(0, 3).join(' ') + (words.length > 3 ? '...' : '');
             return <div>{truncatedDescription}</div>;
         },
     },
@@ -257,20 +255,20 @@ export default function TodoList() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center py-4 space-x-2 justify-between">
-                <div className="flex items-center space-x-2">
-                    <Input
-                        placeholder="Filter Tasks..."
-                        value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
-                        onChange={(event) => table.getColumn('title')?.setFilterValue(event.target.value)}
-                        className="max-w-sm"
-                    />
+            <div className="flex flex-col space-y-4 py-4">
+                <Input
+                    placeholder="Filter Tasks..."
+                    value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
+                    onChange={(event) => table.getColumn('title')?.setFilterValue(event.target.value)}
+                    className="w-full"
+                />
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <Select
                         onValueChange={(value) =>
                             table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
                         }
                     >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Select Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -286,7 +284,7 @@ export default function TodoList() {
                             table.getColumn('priority')?.setFilterValue(value === 'all' ? '' : value)
                         }
                     >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Select Priority" />
                         </SelectTrigger>
                         <SelectContent>
@@ -299,12 +297,13 @@ export default function TodoList() {
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                            <VscSettings />
-                            View <ChevronDown className="ml-2 h-4 w-4" />
+                        <Button variant="outline" className="w-full sm:w-auto">
+                            <VscSettings className="mr-2 h-4 w-4" />
+                            View
+                            <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-[200px]">
                         {table
                             .getAllColumns()
                             .filter((column) => column.getCanHide())
@@ -323,14 +322,14 @@ export default function TodoList() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id}>
+                                        <TableHead key={header.id} className="px-2 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm">
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(header.column.columnDef.header, header.getContext())}
@@ -345,7 +344,7 @@ export default function TodoList() {
                             table.getRowModel().rows.map((row) => (
                                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell key={cell.id} className="px-2 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
@@ -361,12 +360,12 @@ export default function TodoList() {
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 py-4">
+                <div className="text-sm text-muted-foreground">
                     {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length}{' '}
                     row(s) selected.
                 </div>
-                <div className="space-x-2">
+                <div className="flex space-x-2">
                     <Button
                         variant="outline"
                         size="sm"

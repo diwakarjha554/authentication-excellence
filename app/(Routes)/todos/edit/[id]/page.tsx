@@ -4,8 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+// import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+// import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface Todo {
     _id: string;
@@ -30,6 +38,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
         priority: 'medium',
     });
     const [updating, setUpdating] = useState(false);
+    const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
     const fetchTodo = async () => {
         try {
@@ -87,6 +96,61 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
         }
     };
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        setError(null);
+    };
+
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        setError(null);
+    };
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData((prev) => ({
+            ...prev,
+            completed: checked,
+        }));
+        setError(null);
+    };
+
+    const generateDescription = async () => {
+        if (!formData.title.trim()) {
+            setError('Please enter a title first');
+            return;
+        }
+
+        setIsGeneratingDescription(true);
+        setError(null);
+
+        try {
+            const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY || '');
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+            const prompt = `Generate a brief description for a todo task with the title: "${formData.title}". The description should be concise and relevant to the title.`;
+
+            const result = await model.generateContent(prompt);
+            const response = result.response;
+            const generatedDescription = response.text();
+
+            setFormData((prev) => ({
+                ...prev,
+                description: generatedDescription,
+            }));
+        } catch (err) {
+            setError('Failed to generate description. Please try again.');
+        } finally {
+            setIsGeneratingDescription(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="container mx-auto px-4 py-8">
@@ -103,13 +167,14 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
         return (
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-lg mx-auto">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-600 text-center">{error}</p>
-                        <div className="mt-4 flex justify-center">
-                            <Link href="/" className="text-blue-500 hover:text-blue-600">
-                                Return to Todos
-                            </Link>
-                        </div>
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                    <div className="mt-4 flex justify-center">
+                        <Link href="/" className="text-blue-500 hover:text-blue-600">
+                            Return to Todos
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -135,148 +200,129 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <div className="max-w-lg mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">Edit Todo</h1>
-                    <Button variant="secondary" onClick={() => router.push('/')}>
-                        Back to Todos
-                    </Button>
-                </div>
+            <Card className="max-w-lg mx-auto">
+                <CardHeader>
+                    <CardTitle>Edit Todo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Title</Label>
+                            <Input
+                                id="title"
+                                name="title"
+                                value={formData.title}
+                                onChange={handleChange}
+                                placeholder="Enter todo title"
+                                disabled={updating}
+                                required
+                                minLength={2}
+                                maxLength={100}
+                            />
+                        </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                            Title
-                        </label>
-                        <input
-                            type="text"
-                            id="title"
-                            value={formData.title}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    title: e.target.value,
-                                }))
-                            }
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required
-                            disabled={updating}
-                            minLength={2}
-                            maxLength={100}
-                        />
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <div className="flex space-x-2">
+                                <Textarea
+                                    id="description"
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    placeholder="Enter todo description"
+                                    disabled={updating || isGeneratingDescription}
+                                    className="min-h-[100px] flex-grow"
+                                    required
+                                    minLength={2}
+                                    maxLength={500}
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={generateDescription}
+                                    disabled={updating || isGeneratingDescription}
+                                    className="self-start"
+                                >
+                                    {isGeneratingDescription ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        'Generate'
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
 
-                    <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                            Description
-                        </label>
-                        <textarea
-                            id="description"
-                            value={formData.description}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    description: e.target.value,
-                                }))
-                            }
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            rows={4}
-                            required
-                            disabled={updating}
-                            minLength={2}
-                            maxLength={500}
-                        />
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="status">Status</Label>
+                            <Select
+                                value={formData.status}
+                                onValueChange={(value: Todo['status']) => handleSelectChange('status', value)}
+                                disabled={updating}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="in_progress">In Progress</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                            Status
-                        </label>
-                        <Select
-                            value={formData.status}
-                            onValueChange={(value: Todo['status']) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    status: value,
-                                }))
-                            }
-                            disabled={updating}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="in_progress">In Progress</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="priority">Priority</Label>
+                            <Select
+                                value={formData.priority}
+                                onValueChange={(value: Todo['priority']) => handleSelectChange('priority', value)}
+                                disabled={updating}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select priority" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="low">Low</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    <div>
-                        <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
-                            Priority
-                        </label>
-                        <Select
-                            value={formData.priority}
-                            onValueChange={(value: Todo['priority']) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    priority: value,
-                                }))
-                            }
-                            disabled={updating}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select priority" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex items-center">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
+                        {/* <div className="flex items-center space-x-2">
+                            <Switch
                                 id="completed"
                                 checked={formData.completed}
-                                onCheckedChange={(checked) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        completed: checked === true,
-                                    }))
-                                }
+                                onCheckedChange={handleSwitchChange}
                                 disabled={updating}
                             />
-                            <label
-                                htmlFor="completed"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Mark as completed
-                            </label>
-                        </div>
-                    </div>
+                            <Label htmlFor="completed">Completed</Label>
+                        </div> */}
 
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                            <p className="text-sm text-red-600">{error}</p>
-                        </div>
-                    )}
+                        {error && (
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
 
-                    <div className="flex justify-end space-x-3">
-                        <Button variant="outline" onClick={() => router.push('/')}>
-                            Cancel
-                        </Button>
-                        <Button variant="default" type="submit" disabled={updating}>
-                            {updating ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                    </div>
-                </form>
-            </div>
+                        <div className="flex justify-end space-x-3">
+                            <Button variant="outline" onClick={() => router.push('/')}>
+                                Cancel
+                            </Button>
+                            <Button variant="default" type="submit" disabled={updating}>
+                                {updating ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    'Save Changes'
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
     );
 }
