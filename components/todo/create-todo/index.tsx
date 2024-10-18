@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+// import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface TodoFormData {
     title: string;
@@ -32,6 +33,7 @@ const CreateTodo = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -106,6 +108,36 @@ const CreateTodo = () => {
         }
     };
 
+    const generateDescription = async () => {
+        if (!formData.title.trim()) {
+            setError('Please enter a title first');
+            return;
+        }
+
+        setIsGeneratingDescription(true);
+        setError(null);
+
+        try {
+            const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY || '');
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+            const prompt = `Generate a brief description for a todo task with the title: "${formData.title}". The description should be concise and relevant to the title.`;
+
+            const result = await model.generateContent(prompt);
+            const response = result.response;
+            const generatedDescription = response.text();
+
+            setFormData((prev) => ({
+                ...prev,
+                description: generatedDescription,
+            }));
+        } catch (err) {
+            setError('Failed to generate description. Please try again.');
+        } finally {
+            setIsGeneratingDescription(false);
+        }
+    };
+
     return (
         <Card className="w-full max-w-md mx-auto">
             <CardHeader>
@@ -127,15 +159,29 @@ const CreateTodo = () => {
 
                     <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
-                        <Textarea
-                            id="description"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            placeholder="Enter todo description (optional)"
-                            disabled={isLoading}
-                            className="min-h-[100px]"
-                        />
+                        <div className="flex space-x-2">
+                            <Textarea
+                                id="description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                placeholder="Enter todo description (optional)"
+                                disabled={isLoading || isGeneratingDescription}
+                                className="min-h-[100px] flex-grow"
+                            />
+                            <Button
+                                type="button"
+                                onClick={generateDescription}
+                                disabled={isLoading || isGeneratingDescription}
+                                className="self-start"
+                            >
+                                {isGeneratingDescription ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    'Generate'
+                                )}
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -173,10 +219,10 @@ const CreateTodo = () => {
                         </Select>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* <div className="flex items-center space-x-2">
                         <Switch id="completed" checked={formData.completed} onCheckedChange={handleSwitchChange} />
                         <Label htmlFor="completed">Completed</Label>
-                    </div>
+                    </div> */}
 
                     {error && (
                         <Alert variant="destructive">
