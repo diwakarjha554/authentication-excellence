@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ClerkLoading, ClerkProvider } from '@clerk/nextjs';
+import { ClerkLoading, ClerkLoaded, ClerkProvider } from '@clerk/nextjs';
 import '@/stylesheets/globals.css';
 import Logo from '@/components/ui/features/Logo';
 
@@ -29,7 +29,7 @@ export default function RootLayout({
                             <Logo />
                         </div>
                     </ClerkLoading>
-                    {children}
+                    <ClerkLoaded>{children}</ClerkLoaded>
                 </ClerkProvider>
             </body>
         </html>
