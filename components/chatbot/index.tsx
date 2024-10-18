@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,7 +18,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { type Message, type ChatbotSession } from '@/types/chatbot';
+import { type ChatbotSession } from '@/types/chatbot';
 
 const Chatbot: React.FC = () => {
     const [sessions, setSessions] = useState<ChatbotSession[]>([]);

@@ -11,7 +11,7 @@ export async function GET() {
         const sessions = await getChatbotSessions();
         return NextResponse.json(sessions);
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
+        return NextResponse.json({ error: error, message: 'Failed to get chatbot sessions' }, { status: 500 });
     }
 }
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         const newSession = await createChatbotSession(title);
         return NextResponse.json(newSession);
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+        return NextResponse.json({ error: error, message: 'Failed to create chatbot session' }, { status: 500 });
     }
 }
 
@@ -31,7 +31,7 @@ export async function PUT(request: NextRequest) {
         const updatedSession = await addMessageToChatbotSession(sessionId, message);
         return NextResponse.json(updatedSession);
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to add message' }, { status: 500 });
+        return NextResponse.json({ error: error, message: 'Failed to add message to chatbot session' }, { status: 500 });
     }
 }
 
@@ -45,6 +45,6 @@ export async function DELETE(request: NextRequest) {
         await deleteChatbotSession(sessionId);
         return NextResponse.json({ success: true });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
+        return NextResponse.json({ error: error, message: 'Failed to delete chatbot session' }, { status: 500 });
     }
 }
