@@ -8,7 +8,7 @@ const page = () => {
             <NavbarMarginLayout>
                 <div className='flex flex-col gap-2'>
                     <span className='text-3xl font-semibold'>Welcome back!</span>
-                    <span className='text-neutral-800'>Here's a list of your tasks for this month!</span>
+                    <span className='text-neutral-800'>Here&apos;s a list of your tasks for this month!</span>
                 </div>
                 <TodoList />
             </NavbarMarginLayout>
