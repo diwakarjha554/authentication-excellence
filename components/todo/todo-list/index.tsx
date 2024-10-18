@@ -1,46 +1,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-    ColumnDef,
-    ColumnFiltersState,
-    SortingState,
-    VisibilityState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
-} from '@tanstack/react-table';
+import { ColumnDef, ColumnFiltersState, SortingState, VisibilityState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowUpDown, ChevronDown, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { VscSettings } from 'react-icons/vsc';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface TodoProps {
     _id: string;
@@ -150,7 +121,7 @@ export const columns: ColumnDef<TodoProps>[] = [
         cell: ({ row }) => {
             const description = row.getValue('description') as string;
             const words = description.split(' ');
-            const truncatedDescription = words.slice(0, 3).join(' ') + (words.length > 3 ? '...' : '');
+            const truncatedDescription = words.slice(0, 7).join(' ') + (words.length > 7 ? '...' : '');
             return <div>{truncatedDescription}</div>;
         },
     },
@@ -255,20 +226,20 @@ export default function TodoList() {
 
     return (
         <div className="w-full">
-            <div className="flex flex-col space-y-4 py-4">
-                <Input
-                    placeholder="Filter Tasks..."
-                    value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
-                    onChange={(event) => table.getColumn('title')?.setFilterValue(event.target.value)}
-                    className="w-full"
-                />
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            <div className="flex items-center py-4 space-x-2 justify-between">
+                <div className="flex items-center space-x-2 w-full">
+                    <Input
+                        placeholder="Filter Tasks..."
+                        value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
+                        onChange={(event) => table.getColumn('title')?.setFilterValue(event.target.value)}
+                        className="max-w-sm"
+                    />
                     <Select
                         onValueChange={(value) =>
                             table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
                         }
                     >
-                        <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectTrigger className="max-w-[150px]">
                             <SelectValue placeholder="Select Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -284,7 +255,7 @@ export default function TodoList() {
                             table.getColumn('priority')?.setFilterValue(value === 'all' ? '' : value)
                         }
                     >
-                        <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectTrigger className="max-w-[150px]">
                             <SelectValue placeholder="Select Priority" />
                         </SelectTrigger>
                         <SelectContent>
@@ -297,13 +268,12 @@ export default function TodoList() {
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full sm:w-auto">
-                            <VscSettings className="mr-2 h-4 w-4" />
-                            View
-                            <ChevronDown className="ml-2 h-4 w-4" />
+                        <Button variant="outline" className="ml-auto">
+                            <VscSettings />
+                            View <ChevronDown className="ml-2 h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[200px]">
+                    <DropdownMenuContent align="end">
                         {table
                             .getAllColumns()
                             .filter((column) => column.getCanHide())
@@ -322,14 +292,14 @@ export default function TodoList() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id} className="px-2 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm">
+                                        <TableHead key={header.id}>
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(header.column.columnDef.header, header.getContext())}
@@ -344,7 +314,7 @@ export default function TodoList() {
                             table.getRowModel().rows.map((row) => (
                                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="px-2 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm">
+                                        <TableCell key={cell.id}>
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
@@ -360,12 +330,12 @@ export default function TodoList() {
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 py-4">
-                <div className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-end space-x-2 py-4">
+                <div className="flex-1 text-sm text-muted-foreground">
                     {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length}{' '}
                     row(s) selected.
                 </div>
-                <div className="flex space-x-2">
+                <div className="space-x-2">
                     <Button
                         variant="outline"
                         size="sm"
