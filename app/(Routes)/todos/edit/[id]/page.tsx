@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Todo {
     _id: string;
     title: string;
     description: string;
     completed: boolean;
+    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    priority: 'low' | 'medium' | 'high';
 }
 
 export default function EditTodoPage({ params }: { params: { id: string } }) {
@@ -18,10 +21,13 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
     const [todo, setTodo] = useState<Todo | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Todo>({
+        _id: '',
         title: '',
         description: '',
         completed: false,
+        status: 'pending',
+        priority: 'medium',
     });
     const [updating, setUpdating] = useState(false);
 
@@ -30,7 +36,6 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
             setLoading(true);
             setError(null);
 
-            // Changed to GET request for fetching the todo
             const response = await fetch(`/api/todo/${params.id}`, {
                 method: 'GET',
             });
@@ -41,11 +46,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
 
             const data = await response.json();
             setTodo(data);
-            setFormData({
-                title: data.title,
-                description: data.description,
-                completed: data.completed,
-            });
+            setFormData(data);
         } catch (error) {
             console.error('Error fetching todo:', error);
             setError(error instanceof Error ? error.message : 'Failed to fetch todo');
@@ -65,7 +66,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
             setError(null);
 
             const response = await fetch(`/api/todo/${params.id}`, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -160,6 +161,8 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                             className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required
                             disabled={updating}
+                            minLength={2}
+                            maxLength={100}
                         />
                     </div>
 
@@ -180,7 +183,60 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                             rows={4}
                             required
                             disabled={updating}
+                            minLength={2}
+                            maxLength={500}
                         />
+                    </div>
+
+                    <div>
+                        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                            Status
+                        </label>
+                        <Select
+                            value={formData.status}
+                            onValueChange={(value: Todo['status']) =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    status: value,
+                                }))
+                            }
+                            disabled={updating}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                            Priority
+                        </label>
+                        <Select
+                            value={formData.priority}
+                            onValueChange={(value: Todo['priority']) =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    priority: value,
+                                }))
+                            }
+                            disabled={updating}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="flex items-center">

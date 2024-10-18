@@ -8,10 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface TodoFormData {
     title: string;
     description: string;
+    completed: boolean;
+    status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+    priority: 'low' | 'medium' | 'high';
 }
 
 const CreateTodo = () => {
@@ -19,6 +25,9 @@ const CreateTodo = () => {
     const [formData, setFormData] = useState<TodoFormData>({
         title: '',
         description: '',
+        completed: false,
+        status: 'pending',
+        priority: 'medium',
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,6 +38,24 @@ const CreateTodo = () => {
         setFormData((prev) => ({
             ...prev,
             [name]: value,
+        }));
+        setError(null);
+        setSuccess(false);
+    };
+
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        setError(null);
+        setSuccess(false);
+    };
+
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData((prev) => ({
+            ...prev,
+            completed: checked,
         }));
         setError(null);
         setSuccess(false);
@@ -69,7 +96,7 @@ const CreateTodo = () => {
 
             const data = await response.json();
             setSuccess(true);
-            setFormData({ title: '', description: '' });
+            setFormData({ title: '', description: '', completed: false, status: 'pending', priority: 'medium' });
             console.log(data);
             router.push('/');
         } catch (err) {
@@ -80,63 +107,103 @@ const CreateTodo = () => {
     };
 
     return (
-        <div className="w-full max-w-md mx-auto p-6 space-y-6">
-            <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-gray-900">Create New Todo</h2>
-                <p className="text-sm text-gray-500">Add a new task to your todo list</p>
-            </div>
+        <Card className="w-full max-w-md mx-auto">
+            <CardHeader>
+                <CardTitle>Create New Todo</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                            id="title"
+                            name="title"
+                            value={formData.title}
+                            onChange={handleChange}
+                            placeholder="Enter todo title"
+                            disabled={isLoading}
+                        />
+                    </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                        id="title"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        placeholder="Enter todo title"
-                        disabled={isLoading}
-                    />
-                </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea
+                            id="description"
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            placeholder="Enter todo description (optional)"
+                            disabled={isLoading}
+                            className="min-h-[100px]"
+                        />
+                    </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                        id="description"
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        placeholder="Enter todo description (optional)"
-                        disabled={isLoading}
-                        className="min-h-[100px]"
-                    />
-                </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="status">Status</Label>
+                        <Select
+                            onValueChange={(value) => handleSelectChange('status', value)}
+                            defaultValue={formData.status}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
+                    <div className="space-y-2">
+                        <Label htmlFor="priority">Priority</Label>
+                        <Select
+                            onValueChange={(value) => handleSelectChange('priority', value)}
+                            defaultValue={formData.priority}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                {success && (
-                    <Alert className="bg-green-50 text-green-700 border-green-200">
-                        <AlertDescription>Todo created successfully!</AlertDescription>
-                    </Alert>
-                )}
+                    <div className="flex items-center space-x-2">
+                        <Switch id="completed" checked={formData.completed} onCheckedChange={handleSwitchChange} />
+                        <Label htmlFor="completed">Completed</Label>
+                    </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating...
-                        </>
-                    ) : (
-                        'Create Todo'
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
                     )}
-                </Button>
-            </form>
-        </div>
+
+                    {success && (
+                        <Alert className="bg-green-50 text-green-700 border-green-200">
+                            <AlertDescription>Todo created successfully!</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating...
+                            </>
+                        ) : (
+                            'Create Todo'
+                        )}
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
     );
 };
 

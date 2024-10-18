@@ -7,7 +7,6 @@ interface Params {
     id: string;
 }
 
-// Add GET handler for fetching a single todo
 export async function GET(request: NextRequest, { params }: { params: Params }) {
     try {
         const { sessionClaims } = getAuth(request);
@@ -29,21 +28,21 @@ export async function GET(request: NextRequest, { params }: { params: Params }) 
     }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: Params }) {
+export async function PUT(request: NextRequest, { params }: { params: Params }) {
     try {
         const { sessionClaims } = getAuth(request);
         const metadata = sessionClaims?.metadata as { userId?: string };
         const userId = metadata.userId;
 
         const body = await request.json();
-        const { title, description, completed } = body;
+        const { title, description, completed, status, priority } = body;
 
         await dbConnect();
 
         const todo = await Todo.findOneAndUpdate(
             { _id: params.id, userId },
-            { title, description, completed },
-            { new: true }
+            { title, description, completed, status, priority },
+            { new: true, runValidators: true }
         );
 
         if (!todo) {
