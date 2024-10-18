@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import '@/stylesheets/globals.css';
+import Logo from '@/components/ui/features/Logo';
 
 export const metadata: Metadata = {
     title: {
@@ -25,7 +26,7 @@ export default function RootLayout({
                 <ClerkProvider>
                     <ClerkLoading>
                         <div className="flex h-screen items-center justify-center text-2xl">
-                            <p>Loading...</p>
+                            <Logo />
                         </div>
                     </ClerkLoading>
                     {children}
