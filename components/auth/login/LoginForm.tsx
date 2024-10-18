@@ -110,6 +110,7 @@ const LoginForm = ({ className }: React.HTMLAttributes<HTMLDivElement>) => {
                                 placeholder="Email Id"
                                 disabled={isLoading}
                                 required
+                                className=''
                             />
                         </div>
                         <Button type="submit" disabled={isLoading}>
