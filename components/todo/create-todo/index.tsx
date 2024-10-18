@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -219,10 +219,10 @@ const CreateTodo = () => {
                         </Select>
                     </div>
 
-                    {/* <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2">
                         <Switch id="completed" checked={formData.completed} onCheckedChange={handleSwitchChange} />
                         <Label htmlFor="completed">Completed</Label>
-                    </div> */}
+                    </div>
 
                     {error && (
                         <Alert variant="destructive">

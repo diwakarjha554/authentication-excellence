@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-// import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-// import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -288,7 +288,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                             </Select>
                         </div>
 
-                        {/* <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">
                             <Switch
                                 id="completed"
                                 checked={formData.completed}
@@ -296,7 +296,7 @@ export default function EditTodoPage({ params }: { params: { id: string } }) {
                                 disabled={updating}
                             />
                             <Label htmlFor="completed">Completed</Label>
-                        </div> */}
+                        </div>
 
                         {error && (
                             <Alert variant="destructive">
