@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Menu, Trash2, Send, Edit2 } from 'lucide-react';
+import { Menu, Trash2, Send, Edit2, Mic, VolumeX, Volume2 } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,7 +18,20 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { type ChatbotSession } from '@/types/chatbot';
+import { createClient } from '@deepgram/sdk';
+
+interface Message {
+    role: 'user' | 'bot';
+    content: string;
+    timestamp: Date;
+}
+
+interface ChatbotSession {
+    _id: string;
+    title: string;
+    messages: Message[];
+    lastInteraction: Date;
+}
 
 const Chatbot: React.FC = () => {
     const [sessions, setSessions] = useState<ChatbotSession[]>([]);
@@ -30,6 +43,10 @@ const Chatbot: React.FC = () => {
     const [genAI, setGenAI] = useState<GoogleGenerativeAI | null>(null);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState('');
+    const [isListening, setIsListening] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const deepgramLive = useRef<MediaRecorder | null>(null);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY;
@@ -38,7 +55,26 @@ const Chatbot: React.FC = () => {
             setGenAI(genAI);
         }
         fetchSessions();
+
+        // Initialize Web Speech API
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                // Voices loaded, you can use them now
+            };
+        }
+
+        return () => {
+            if (deepgramLive.current && deepgramLive.current.state === 'recording') {
+                deepgramLive.current.stop();
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        if (scrollAreaRef.current) {
+            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        }
+    }, [sessions]);
 
     const fetchSessions = async () => {
         try {
@@ -89,7 +125,7 @@ const Chatbot: React.FC = () => {
             }
         }
 
-        const userMessage = { role: 'user' as const, content: input, timestamp: new Date() };
+        const userMessage: Message = { role: 'user', content: input, timestamp: new Date() };
 
         // Immediately update the UI with the user's message
         setSessions((prev) =>
@@ -111,7 +147,7 @@ const Chatbot: React.FC = () => {
             const text = response.text();
 
             if (text) {
-                const botMessage = { role: 'bot' as const, content: text, timestamp: new Date() };
+                const botMessage: Message = { role: 'bot', content: text, timestamp: new Date() };
 
                 await Promise.all([
                     fetch('/api/chatbot', {
@@ -185,7 +221,122 @@ const Chatbot: React.FC = () => {
         }
     };
 
+    const checkMicrophonePermission = async () => {
+        try {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            return true;
+        } catch (err) {
+            console.error('Microphone permission denied:', err);
+            setError('Microphone permission is required for speech input.');
+            return false;
+        }
+    };
+
+    const startListening = async () => {
+        if (!(await checkMicrophonePermission())) {
+            setIsListening(false);
+            return;
+        }
+
+        setIsListening(true);
+        try {
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            const audioChunks: Blob[] = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const arrayBuffer = await audioBlob.arrayBuffer();
+            
+                // console.log('Audio blob size:', audioBlob.size, 'bytes');
+                // console.log('Array buffer length:', arrayBuffer.byteLength, 'bytes');
+            
+                // Check if the audio is too short (less than 1 second, assuming 44.1kHz sample rate)
+                // if (arrayBuffer.byteLength < 44100 * 2) {  // 2 bytes per sample
+                //     console.log('Audio too short, may not contain speech');
+                //     setError('Audio too short. Please speak for a longer duration.');
+                //     return;
+                // }
+            
+                try {
+                    console.log('Sending audio for transcription...');
+                    const response = await fetch('/api/transcribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'audio/wav' },
+                        body: arrayBuffer
+                    });
+            
+                    const data = await response.json();
+                    console.log('Server response:', response.status, data);
+            
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(data)}`);
+                    }
+            
+                    if (data.message === 'No speech detected in the audio' || !data.transcript) {
+                        console.log('No speech detected or empty transcript');
+                        setError('No speech detected. Please try speaking again.');
+                        return;
+                    }
+            
+                    if (data.transcript && data.transcript.trim() !== '') {
+                        console.log('Received transcript:', data.transcript);
+                        setInput(data.transcript);
+                        await handleSend();
+                    } else {
+                        console.error('Empty transcript in response');
+                        setError('No valid transcription received. Please try speaking again.');
+                    }
+                } catch (error) {
+                    console.error('Transcription error:', error);
+                    setError('Failed to transcribe audio: ' + (error instanceof Error ? error.message : String(error)));
+                } finally {
+                    setIsListening(false);
+                }
+            };
+
+            mediaRecorder.start();
+            deepgramLive.current = mediaRecorder;
+
+        } catch (error) {
+            console.error('Error starting speech recognition:', error);
+            setIsListening(false);
+        }
+    };
+
+    const stopListening = () => {
+        setIsListening(false);
+        if (deepgramLive.current && deepgramLive.current.state === 'recording') {
+            deepgramLive.current.stop();
+        }
+    };
+
+    const speakMessage = (text: string) => {
+        if ('speechSynthesis' in window) {
+            setIsSpeaking(true);
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.onend = () => setIsSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+        }
+    };
+
+    const stopSpeaking = () => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+        }
+    };
+
     const currentSession = sessions.find((session) => session._id === currentSessionId);
+
+    const formatTimestamp = (timestamp: Date) => {
+        return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
         <Card className="flex h-screen w-full">
@@ -279,7 +430,7 @@ const Chatbot: React.FC = () => {
                 </CardHeader>
 
                 <CardContent className="flex-grow overflow-hidden p-0">
-                    <ScrollArea className="h-full">
+                    <ScrollArea className="h-full" ref={scrollAreaRef}>
                         {error && <div className="p-4 text-red-500 text-center">{error}</div>}
                         {currentSession?.messages.map((message, index) => (
                             <div
@@ -287,17 +438,30 @@ const Chatbot: React.FC = () => {
                                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} p-4`}
                             >
                                 <div
-                                    className={`flex items-end ${
-                                        message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                                    className={`flex flex-col ${
+                                        message.role === 'user' ? 'items-end' : 'items-start'
                                     } max-w-[80%]`}
                                 >
+                                    <div className="text-xs text-gray-500 mb-1">
+                                        {formatTimestamp(message.timestamp)}
+                                    </div>
                                     <Card
-                                        className={`mx-2 p-3 ${
+                                        className={`p-3 ${
                                             message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                                         }`}
                                     >
-                                        <CardContent className="p-0 whitespace-pre-wrap">{message.content}</CardContent>
+                                        <CardContent className="p-0 whitespace-pre-wrap">
+                                            {message.content}
+                                        </CardContent>
                                     </Card>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => isSpeaking ? stopSpeaking() : speakMessage(message.content)}
+                                        className="mt-2"
+                                    >
+                                        {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                                    </Button>
                                 </div>
                             </div>
                         ))}
@@ -324,10 +488,17 @@ const Chatbot: React.FC = () => {
                                     handleSend();
                                 }
                             }}
-                            disabled={isLoading}
+                            disabled={isLoading || isListening}
                             className="flex-grow"
                         />
-                        <Button onClick={handleSend} disabled={isLoading || !input.trim()} className="px-4">
+                        <Button
+                            onClick={isListening ? stopListening : startListening}
+                            disabled={isLoading}
+                            className={`px-4 ${isListening ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                        >
+                            <Mic className={`h-4 w-4 ${isListening ? 'text-white' : ''}`} />
+                        </Button>
+                        <Button onClick={handleSend} disabled={isLoading || (!input.trim() && !isListening)} className="px-4">
                             {isLoading ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent" />
                             ) : (
