@@ -18,7 +18,6 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@deepgram/sdk';
 
 interface Message {
     role: 'user' | 'bot';
