@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Deepgram API error', details: error }, { status: 500 });
         }
 
-        console.log('Deepgram response:', JSON.stringify(result, null, 2));
+        // console.log('Deepgram response:', JSON.stringify(result, null, 2));
 
         if (!result || !result.results) {
             console.error('Unexpected Deepgram response structure:', result);
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'No speech detected in the audio', transcript: '' }, { status: 200 });
         }
 
-        console.log('Transcription successful:', transcript);
+        // console.log('Transcription successful:', transcript);
         return NextResponse.json({ transcript });
     } catch (error) {
         console.error('Transcription error:', error);

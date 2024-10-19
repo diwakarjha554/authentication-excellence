@@ -46,6 +46,7 @@ const Chatbot: React.FC = () => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const deepgramLive = useRef<MediaRecorder | null>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY;
@@ -65,6 +66,9 @@ const Chatbot: React.FC = () => {
         return () => {
             if (deepgramLive.current && deepgramLive.current.state === 'recording') {
                 deepgramLive.current.stop();
+            }
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
             }
         };
     }, []);
@@ -238,8 +242,9 @@ const Chatbot: React.FC = () => {
         }
 
         setIsListening(true);
+        setInput(''); // Clear the input when starting to listen
+
         try {
-            
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
             const audioChunks: Blob[] = [];
@@ -251,16 +256,6 @@ const Chatbot: React.FC = () => {
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 const arrayBuffer = await audioBlob.arrayBuffer();
-            
-                // console.log('Audio blob size:', audioBlob.size, 'bytes');
-                // console.log('Array buffer length:', arrayBuffer.byteLength, 'bytes');
-            
-                // Check if the audio is too short (less than 1 second, assuming 44.1kHz sample rate)
-                // if (arrayBuffer.byteLength < 44100 * 2) {  // 2 bytes per sample
-                //     console.log('Audio too short, may not contain speech');
-                //     setError('Audio too short. Please speak for a longer duration.');
-                //     return;
-                // }
             
                 try {
                     console.log('Sending audio for transcription...');
@@ -302,6 +297,41 @@ const Chatbot: React.FC = () => {
             mediaRecorder.start();
             deepgramLive.current = mediaRecorder;
 
+            // Set up silence detection
+            const audioContext = new AudioContext();
+            const analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            analyser.fftSize = 2048;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const checkSilence = () => {
+                analyser.getByteFrequencyData(dataArray);
+                const sum = dataArray.reduce((a, b) => a + b, 0);
+                const average = sum / bufferLength;
+
+                if (average < 10) { // Adjust this threshold as needed
+                    if (silenceTimeoutRef.current === null) {
+                        silenceTimeoutRef.current = setTimeout(() => {
+                            console.log('Silence detected for 5 seconds, stopping recording');
+                            stopListening();
+                        }, 3000);
+                    }
+                } else {
+                    if (silenceTimeoutRef.current) {
+                        clearTimeout(silenceTimeoutRef.current);
+                        silenceTimeoutRef.current = null;
+                    }
+                }
+
+                if (isListening) {
+                    requestAnimationFrame(checkSilence);
+                }
+            };
+
+            checkSilence();
+
         } catch (error) {
             console.error('Error starting speech recognition:', error);
             setIsListening(false);
@@ -312,6 +342,10 @@ const Chatbot: React.FC = () => {
         setIsListening(false);
         if (deepgramLive.current && deepgramLive.current.state === 'recording') {
             deepgramLive.current.stop();
+        }
+        if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+            silenceTimeoutRef.current = null;
         }
     };
 
@@ -491,7 +525,14 @@ const Chatbot: React.FC = () => {
                             className="flex-grow"
                         />
                         <Button
-                            onClick={isListening ? stopListening : startListening}
+                            onClick={() => {
+                                if (isListening) {
+                                    stopListening();
+                                } else {
+                                    setInput(''); // Clear the input when starting to listen
+                                    startListening();
+                                }
+                            }}
                             disabled={isLoading}
                             className={`px-4 ${isListening ? 'bg-red-500 hover:bg-red-600' : ''}`}
                         >
